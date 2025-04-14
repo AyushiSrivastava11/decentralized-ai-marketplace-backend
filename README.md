@@ -1,6 +1,7 @@
-### Entity Overview
+### 📦 Entity Overview
 
-
+| Entity     | Description                                 |
+|------------|---------------------------------------------|
 | `User`     | Represents a user or developer              |
 | `AIWorker` | An AI script or model deployed by a dev     |
 | `Job`      | Tracks usage of AI Workers                  |
@@ -129,3 +130,7 @@ model Admin {
 ```
 
 </details>
+
+
+
+
