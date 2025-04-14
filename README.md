@@ -1,4 +1,4 @@
-### 📦 Entity Overview
+###  Entity Overview
 
 | Entity     | Description                                 |
 |------------|---------------------------------------------|
@@ -8,9 +8,8 @@
 | `Review`   | User feedback for workers                   |
 | `Admin`    | Superuser for platform management (optional)|
 
----
 
-### 🛠️ Prisma Models
+###  Prisma Models
 
 <details>
 <summary><strong>1. User</strong></summary>
