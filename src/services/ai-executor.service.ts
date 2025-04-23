@@ -8,10 +8,11 @@ import prisma from "../database/prismaClient";
 export const runAIWorker = async (workerId: string, input: any, jobId: string) => {
   const worker = await prisma.aIWorker.findUnique({ where: { id: workerId } });
   if (!worker) throw new Error("Agent not found");
+  const BUCKET_NAME = "ai-agent-uploads"; 
 
   const localZipPath = `/tmp/${workerId}.zip`;
   const storage = new Storage();
-  await storage.bucket("your-bucket").file(`agents/${workerId}.zip`).download({ destination: localZipPath });
+  await storage.bucket(BUCKET_NAME).file(`agents/${workerId}.zip`).download({ destination: localZipPath });
 
   const extractPath = `/tmp/worker-${workerId}`;
   const zip = new AdmZip(localZipPath); //

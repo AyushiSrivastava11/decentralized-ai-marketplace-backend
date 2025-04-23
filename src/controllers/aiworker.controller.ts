@@ -1,7 +1,7 @@
 import { NextFunction, Request, Response } from "express";
-import prisma from "@/src/database/prismaClient";
-import { uploadToGCS } from "@/src/services/gcs.service";
-import { runAIWorker } from "@/src/services/ai-executor.service";
+import prisma from "../database/prismaClient";
+import { uploadToGCS } from "../services/gcs.service";
+import { runAIWorker } from "../services/ai-executor.service";
 import { catchAsync } from "../middlewares/catchAsyncError";
 import ErrorHandler from "../utils/ErrorHandler";
 
@@ -40,6 +40,7 @@ export const uploadWorker = catchAsync(
 
       res.json({ success: true, aiWorker });
     } catch (error: any) {
+      console.log(error);
       return next(new ErrorHandler(error.message, 400));
     }
   }
