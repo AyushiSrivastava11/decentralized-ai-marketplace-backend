@@ -22,8 +22,9 @@ export const uploadWorker = catchAsync(
         // return res.status(400).json({ success: false, message: "No file uploaded" });
         return next(new ErrorHandler("No file uploaded", 400));
       }
+      console.log("File uploaded:", file.filename);
 
-      const gcsUrl = await uploadToGCS(file.path, `agents/${file.filename}`);
+      const gcsUrl = await uploadToGCS(file.path, `agents/${file.filename}.zip`);
 
       const aiWorker = await prisma.aIWorker.create({
         data: {
@@ -33,12 +34,12 @@ export const uploadWorker = catchAsync(
           filePath: gcsUrl,
           inputSchema: JSON.parse(inputSchema),
           outputSchema: JSON.parse(outputSchema),
-          developerId: "user-id",
+          developerId: "allahabibi",
           pricePerRun: parseFloat(pricePerRun),
         },
       });
 
-      res.json({ success: true, aiWorker });
+      res.json({ success: true, aiWorker  });
     } catch (error: any) {
       console.log(error);
       return next(new ErrorHandler(error.message, 400));
@@ -48,27 +49,9 @@ export const uploadWorker = catchAsync(
 
 export const executeWorker = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
-    /*const { workerId, input } = req.body;
-
-  if (!workerId || !input) {
-    return res.status(400).json({ success: false, message: "workerId and input are required" });
-  }
-
-  const aiWorker = await prisma.aIWorker.findUnique({
-    where: { id: workerId },
-  });
-
-  if (!aiWorker) {
-    return res.status(404).json({ success: false, message: "AI Worker not found" });
-  }
-
-  const output = { result: "Dummy output from AI Worker" };
-
-  res.json({ success: true, output });*/
-
     try {
-      const { id } = req.params;
-      const { input, userId } = req.body;
+      const { id } = req.params; //For AI Worker ID
+      const { input, userId, path } = req.body;
 
       const job = await prisma.job.create({
         data: {
@@ -79,9 +62,10 @@ export const executeWorker = catchAsync(
         },
       });
 
-      const result = await runAIWorker(id, input, userId);
+      const result = await runAIWorker(id, input, job.id, path);
       res.json(result);
     } catch (error: any) {
+      console.log(error);
       return next(new ErrorHandler(error.message, 400));
     }
   }

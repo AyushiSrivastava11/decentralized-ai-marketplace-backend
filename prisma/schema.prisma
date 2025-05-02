@@ -8,79 +8,58 @@ datasource db {
 }
 
 model User {
-  id            String   @id @default(uuid())
-  name          String
-  email         String   @unique
-  passwordHash  String
-  role          Role     @default(USER)
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-
-  workers       AIWorker[]
-  jobs          Job[]
-  reviews       Review[]
-}
-
-enum Role {
-  USER
-  DEVELOPER
-  ADMIN
+  id           String     @id @default(uuid())
+  name         String
+  email        String     @unique
+  passwordHash String
+  role         Role       @default(USER)
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+  workers      AIWorker[]
+  jobs         Job[]
+  reviews      Review[]
 }
 
 model AIWorker {
-  id            String   @id @default(uuid())
-  name          String
-  description   String
-  tags          String[]
-  inputSchema   Json
-  outputSchema  Json
-  pricePerRun   Float    @default(0.0)
-  isPublic      Boolean  @default(true)
-  filePath      String
-
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-
-  developer     User     @relation(fields: [developerId], references: [id])
-  developerId   String
-
-  jobs          Job[]
-  reviews       Review[]
+  id           String   @id @default(uuid())
+  name         String
+  description  String
+  tags         String[]
+  inputSchema  Json
+  outputSchema Json
+  pricePerRun  Float    @default(0.0)
+  isPublic     Boolean  @default(true)
+  filePath     String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  developerId  String
+  developer    User     @relation(fields: [developerId], references: [id])
+  jobs         Job[]
+  reviews      Review[]
 }
 
 model Job {
-  id          String    @id @default(uuid())
-  input       Json
-  output      Json?
-  status      JobStatus @default(PENDING)
-  startedAt   DateTime?
-  finishedAt  DateTime?
-
-  user        User     @relation(fields: [userId], references: [id])
-  userId      String
-
-  aiWorker    AIWorker @relation(fields: [aiWorkerId], references: [id])
-  aiWorkerId  String
-}
-
-enum JobStatus {
-  PENDING
-  RUNNING
-  SUCCESS
-  FAILED
+  id         String    @id @default(uuid())
+  input      Json
+  output     Json?
+  status     JobStatus @default(PENDING)
+  startedAt  DateTime?
+  finishedAt DateTime?
+  userId     String
+  aiWorkerId String
+  aiWorker   AIWorker  @relation(fields: [aiWorkerId], references: [id])
+  user       User      @relation(fields: [userId], references: [id])
 }
 
 model Review {
   id         String   @id @default(uuid())
-  rating     Int      // 1 to 5
+  rating     Int
   comment    String?
   createdAt  DateTime @default(now())
-
-  user       User     @relation(fields: [userId], references: [id])
   userId     String
-
-  aiWorker   AIWorker @relation(fields: [aiWorkerId], references: [id])
   aiWorkerId String
+  aiWorker   AIWorker @relation(fields: [aiWorkerId], references: [id])
+  user       User     @relation(fields: [userId], references: [id])
 }
 
 model Admin {
@@ -89,4 +68,17 @@ model Admin {
   password  String
   role      String   @default("ADMIN")
   createdAt DateTime @default(now())
+}
+
+enum Role {
+  USER
+  DEVELOPER
+  ADMIN
+}
+
+enum JobStatus {
+  PENDING
+  RUNNING
+  SUCCESS
+  FAILED
 }
