@@ -13,6 +13,7 @@ model User {
   email        String     @unique
   passwordHash String
   role         Role       @default(USER)
+  isDeveloper  Boolean    @default(false)
   createdAt    DateTime   @default(now())
   updatedAt    DateTime   @updatedAt
   workers      AIWorker[]
@@ -62,17 +63,8 @@ model Review {
   user       User     @relation(fields: [userId], references: [id])
 }
 
-model Admin {
-  id        String   @id @default(uuid())
-  email     String   @unique
-  password  String
-  role      String   @default("ADMIN")
-  createdAt DateTime @default(now())
-}
-
 enum Role {
   USER
-  DEVELOPER
   ADMIN
 }
 
