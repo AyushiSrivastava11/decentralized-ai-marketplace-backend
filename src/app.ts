@@ -3,6 +3,7 @@ import cors from "cors";
 import cookieParser from "cookie-parser";
 import aiworkerRoutes from "./routes/aiworker.routes";
 import authRoutes from "./auth/auth.routes";
+import userRoutes from "./routes/user.route";
 import { authenticate, authorize } from "./auth/auth.middleware";
 
 export const app = express();
@@ -17,6 +18,7 @@ app.use(cookieParser());
 
 app.use("/api/v1/aiworker", aiworkerRoutes);
 app.use("/api/v1/auth", authRoutes);
+app.use("/api/v1/user", userRoutes);
 
 app.get("/admin", authenticate, authorize(["ADMIN"]), (req, res) => {
   res.send("Hello admin!");

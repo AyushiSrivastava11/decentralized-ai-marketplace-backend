@@ -5,6 +5,8 @@ import { runAIWorker } from "../services/ai-executor.service";
 import { catchAsync } from "../middlewares/catchAsyncError";
 import ErrorHandler from "../utils/ErrorHandler";
 
+
+//Update UploadWorer
 export const uploadWorker = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
     try {
@@ -70,3 +72,6 @@ export const executeWorker = catchAsync(
     }
   }
 );
+
+//Get Approved AI Workers
+//Get My AI Workers
