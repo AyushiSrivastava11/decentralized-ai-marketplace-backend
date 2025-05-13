@@ -6,7 +6,6 @@ import { catchAsync } from "../middlewares/catchAsyncError";
 import ErrorHandler from "../utils/ErrorHandler";
 
 
-//Update UploadWorer
 export const uploadWorker = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
     try {
@@ -73,5 +72,11 @@ export const executeWorker = catchAsync(
   }
 );
 
+
+//Update UploadWorker such that it gets approved first
 //Get Approved AI Workers
-//Get My AI Workers
+//Get My purchased AI Workers
+//Purchase AI Worker
+//Get All AI Workers
+//Get AI Worker By ID
+//Ir rejected then delete row from table
