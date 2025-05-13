@@ -37,6 +37,8 @@ model AIWorker {
   developer    User     @relation(fields: [developerId], references: [id])
   jobs         Job[]
   reviews      Review[]
+  status     WorkerStatus @default(PENDING) // Enum
+  rejectionReason String?
 }
 
 model Job {
@@ -73,4 +75,10 @@ enum JobStatus {
   RUNNING
   SUCCESS
   FAILED
+}
+
+enum WorkerStatus {
+  PENDING
+  APPROVED
+  REJECTED
 }

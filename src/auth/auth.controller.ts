@@ -23,7 +23,7 @@ export const register = async (req: Request, res: Response): Promise<void> => {
 
 export const login = async (req: Request, res: Response): Promise<void> => {
  
-  // console.log("Login request body:", req.body);
+  console.log("Login request body:", req);
   const { email, password } = req.body;
 
   const user = await prisma.user.findUnique({ where: { email } });
@@ -45,3 +45,6 @@ export const login = async (req: Request, res: Response): Promise<void> => {
     });
   }
 };
+
+//Forgot Password
+//Logout
