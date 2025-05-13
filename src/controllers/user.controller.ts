@@ -70,3 +70,5 @@ export const updateMyProfile = catchAsync(
     }
   }
 );
+
+//Delete My Profile
