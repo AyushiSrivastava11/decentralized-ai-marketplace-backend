@@ -14,7 +14,7 @@ export const verifyPassword = async (password: string, hash: string) => {
 
 export const generateToken = (user: User) => {
   return jwt.sign(
-    { userId: user.id, role: user.role },
+    { id: user.id, role: user.role },
     JWT_SECRET,
     { expiresIn: process.env.JWT_EXPIRES_IN || '7d' } as jwt.SignOptions
   );
