@@ -72,3 +72,18 @@ export const updateMyProfile = catchAsync(
 );
 
 //Delete My Profile
+export const deleteMyProfile = catchAsync(
+  async (req: UserRequest, res: Response, next: NextFunction) => {
+    try {
+      const userId = req.user.id;
+
+      await prisma.user.delete({
+        where: { id: userId },
+      });
+
+      res.json({ success: true, message: "Profile Deleted Successfully" });
+    } catch (error) {
+      console.error("Delete profile error:", error);
+      return next(new ErrorHandler("Internal server error", 500));
+    }
+  });

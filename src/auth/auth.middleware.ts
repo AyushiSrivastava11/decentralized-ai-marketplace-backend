@@ -4,7 +4,7 @@ import jwt from 'jsonwebtoken';
 const JWT_SECRET: jwt.Secret = process.env.JWT_SECRET || 'supersecret';
 
 export interface AuthRequest extends Request {
-  user?: { userId: string, role: string };
+  user?: { id: string, role: string };
 }
 
 export const authenticate = async (req: AuthRequest, res: Response, next: NextFunction):Promise<void> => {
@@ -15,10 +15,12 @@ export const authenticate = async (req: AuthRequest, res: Response, next: NextFu
   }
 
   try {
-    const decoded = jwt.verify(token, JWT_SECRET) as { userId: string, role: string };
+    const decoded = jwt.verify(token, JWT_SECRET) as { id: string, role: string };
+    console.log("Decoded token:", decoded);
     req.user = decoded;
     next();
   } catch (err) {
+    console.error("Token verification error:", err);
     res.status(401).json({ message: 'Invalid token' });
   }
 };
