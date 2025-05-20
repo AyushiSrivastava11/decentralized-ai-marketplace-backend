@@ -16,8 +16,8 @@ model User {
   isDeveloper  Boolean    @default(false)
   createdAt    DateTime   @default(now())
   updatedAt    DateTime   @updatedAt
-  purchasedAIWorkers AIWorker[]
-  iploadedWorkers      AIWorker[]
+  purchasedAIWorkers AIWorker[] @relation("UserPurchases")
+  uploadedWorkers      AIWorker[] @relation("UserUploads")
   jobs         Job[]
   reviews      Review[]
 }
@@ -35,11 +35,12 @@ model AIWorker {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
   developerId  String
-  developer    User     @relation(fields: [developerId], references: [id])
+  developer    User     @relation("UserUploads", fields: [developerId], references: [id])
   jobs         Job[]
   reviews      Review[]
   status     WorkerStatus @default(PENDING) // Enum
   rejectionReason String?
+  purchasers   User[]   @relation("UserPurchases")
 }
 
 model Job {
