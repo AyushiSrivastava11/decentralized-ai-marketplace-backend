@@ -1,8 +1,11 @@
 -- CreateEnum
-CREATE TYPE "Role" AS ENUM ('USER', 'DEVELOPER', 'ADMIN');
+CREATE TYPE "Role" AS ENUM ('USER', 'ADMIN');
 
 -- CreateEnum
 CREATE TYPE "JobStatus" AS ENUM ('PENDING', 'RUNNING', 'SUCCESS', 'FAILED');
+
+-- CreateEnum
+CREATE TYPE "WorkerStatus" AS ENUM ('PENDING', 'APPROVED', 'REJECTED');
 
 -- CreateTable
 CREATE TABLE "User" (
@@ -11,6 +14,7 @@ CREATE TABLE "User" (
     "email" TEXT NOT NULL,
     "passwordHash" TEXT NOT NULL,
     "role" "Role" NOT NULL DEFAULT 'USER',
+    "isDeveloper" BOOLEAN NOT NULL DEFAULT false,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
 
@@ -31,6 +35,8 @@ CREATE TABLE "AIWorker" (
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
     "developerId" TEXT NOT NULL,
+    "status" "WorkerStatus" NOT NULL DEFAULT 'PENDING',
+    "rejectionReason" TEXT,
 
     CONSTRAINT "AIWorker_pkey" PRIMARY KEY ("id")
 );
@@ -62,21 +68,18 @@ CREATE TABLE "Review" (
 );
 
 -- CreateTable
-CREATE TABLE "Admin" (
-    "id" TEXT NOT NULL,
-    "email" TEXT NOT NULL,
-    "password" TEXT NOT NULL,
-    "role" TEXT NOT NULL DEFAULT 'ADMIN',
-    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+CREATE TABLE "_UserPurchases" (
+    "A" TEXT NOT NULL,
+    "B" TEXT NOT NULL,
 
-    CONSTRAINT "Admin_pkey" PRIMARY KEY ("id")
+    CONSTRAINT "_UserPurchases_AB_pkey" PRIMARY KEY ("A","B")
 );
 
 -- CreateIndex
 CREATE UNIQUE INDEX "User_email_key" ON "User"("email");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "Admin_email_key" ON "Admin"("email");
+CREATE INDEX "_UserPurchases_B_index" ON "_UserPurchases"("B");
 
 -- AddForeignKey
 ALTER TABLE "AIWorker" ADD CONSTRAINT "AIWorker_developerId_fkey" FOREIGN KEY ("developerId") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
@@ -92,3 +95,9 @@ ALTER TABLE "Review" ADD CONSTRAINT "Review_aiWorkerId_fkey" FOREIGN KEY ("aiWor
 
 -- AddForeignKey
 ALTER TABLE "Review" ADD CONSTRAINT "Review_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "_UserPurchases" ADD CONSTRAINT "_UserPurchases_A_fkey" FOREIGN KEY ("A") REFERENCES "AIWorker"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "_UserPurchases" ADD CONSTRAINT "_UserPurchases_B_fkey" FOREIGN KEY ("B") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
