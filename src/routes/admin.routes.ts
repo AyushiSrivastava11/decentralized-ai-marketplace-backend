@@ -8,8 +8,8 @@ router.use(authenticate);
 router.use(authorize(["ADMIN"]));
 
 router.get("/get-pending-workers",getPendingWorkers);
-router.post("/approve-worker/:id", approveWorker);
-router.post("/reject-worker/:id", rejectWorker);
+router.patch("/approve-worker/:id", approveWorker);
+router.patch("/reject-worker/:id", rejectWorker);
 router.get("/get-all-users", getAllUsers);
 
 

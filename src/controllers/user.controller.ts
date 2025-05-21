@@ -86,4 +86,4 @@ export const deleteMyProfile = catchAsync(
       console.error("Delete profile error:", error);
       return next(new ErrorHandler("Internal server error", 500));
     }
-  });
+});
