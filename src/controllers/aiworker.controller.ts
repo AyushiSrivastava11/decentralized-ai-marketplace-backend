@@ -92,10 +92,24 @@ export const uploadWorker = catchAsync(
 );
 
 export const executeWorker = catchAsync(
-  async (req: Request, res: Response, next: NextFunction) => {
+  async (req: UserRequest, res: Response, next: NextFunction) => {
     try {
-      const { id } = req.params; //For AI Worker ID
-      const { input, userId, path } = req.body;
+      const { id } = req.params; 
+      const userId = req.user.id; 
+      const { input, path } = req.body;
+      // const purchase = await prisma.userPurchase.findUnique({
+      //   where: {
+      //     userId_aiWorkerId: {
+      //       userId,
+      //       aiWorkerId: id,
+      //     },
+      //   },
+      // });
+
+
+      // if (!purchase || purchase.status !== "PAID") {
+      //   return next(new ErrorHandler("You have not purchased access to this AI worker.", 403));
+      // }
 
       const job = await prisma.job.create({
         data: {
@@ -115,6 +129,8 @@ export const executeWorker = catchAsync(
   }
 );
 
+
+//Unchecked
 export const deleteRejectedWorkers = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
     try {
@@ -152,7 +168,7 @@ export const deleteRejectedWorkers = catchAsync(
 );
 
 //Get Approved AI Workers
-export const approveAIWorkers = catchAsync(
+export const approvedAIWorkers = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
     try {
       const aiApprovedWorkers = await prisma.aIWorker.findMany({
@@ -252,26 +268,7 @@ export const getAIWorkerById = catchAsync(
   }
 );
 
-//Get all AI Workers for Users
-export const getAllAIWorkersForUsers = catchAsync(
-  async (req: Request, res: Response, next: NextFunction) => {
-    try {
-      const allAIWorkers = await prisma.aIWorker.findMany({
-        where: {
-          status: "APPROVED",
-        },
-        select: aiWorkerSelectFields,
-      });
-      if (!allAIWorkers) {
-        return next(new ErrorHandler("No AI Workers found", 404));
-      }
-      res.json({ success: true, allAIWorkers });
-    } catch (error: any) {
-      console.log(error);
-      return next(new ErrorHandler(error.message, 400));
-    }
-  }
-);
+
 
 //Get AI Worker by ID for Users
 export const getAIWorkerByIdForUsers = catchAsync(
