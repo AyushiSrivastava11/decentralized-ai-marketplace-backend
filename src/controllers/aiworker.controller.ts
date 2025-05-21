@@ -10,8 +10,21 @@ interface UserRequest extends Request {
   user: User;
 }
 
+export const aiWorkerSelectFields = {
+  id: true,
+  name: true,
+  description: true,
+  tags: true,
+  filePath: true,
+  inputSchema: true,
+  outputSchema: true,
+  developerId: true,
+  pricePerRun: true,
+  status: true,
+};
+
 export const uploadWorker = catchAsync(
-  async (req: Request, res: Response, next: NextFunction) => {
+  async (req: UserRequest, res: Response, next: NextFunction) => {
     try {
       const {
         name,
@@ -21,8 +34,30 @@ export const uploadWorker = catchAsync(
         outputSchema,
         pricePerRun,
       } = req.body;
+      console.log(req.user);
+      const developerId = req.user.id;
       const file = req.file;
 
+      if (!name || !description || !tags || !inputSchema || !outputSchema) {
+        return next(new ErrorHandler("Please fill all the fields", 400));
+      }
+
+      let parsedInputSchema, parsedOutputSchema;
+      try {
+        parsedInputSchema = JSON.parse(inputSchema);
+        parsedOutputSchema = JSON.parse(outputSchema);
+      } catch (error) {
+        return next(
+          new ErrorHandler("Invalid JSON format for input/output schema", 400)
+        );
+      }
+
+      // const parsedPrice = parseFloat(pricePerRun);
+      // if (isNaN(parsedPrice) || parsedPrice <= 0) {
+      //   return next(
+      //     new ErrorHandler("Price per run must be a positive number", 400)
+      //   );
+      // }
       if (!file) {
         // return res.status(400).json({ success: false, message: "No file uploaded" });
         return next(new ErrorHandler("No file uploaded", 400));
@@ -38,11 +73,11 @@ export const uploadWorker = catchAsync(
         data: {
           name,
           description,
-          tags: tags.split(","),
+          tags: tags.split(",").map((tag: string) => tag.trim()),
           filePath: gcsUrl,
-          inputSchema: JSON.parse(inputSchema),
-          outputSchema: JSON.parse(outputSchema),
-          developerId: "allahabibi",
+          inputSchema: parsedInputSchema,
+          outputSchema: parsedOutputSchema,
+          developerId,
           pricePerRun: parseFloat(pricePerRun),
           status: "PENDING",
         },
@@ -88,7 +123,10 @@ export const deleteRejectedWorkers = catchAsync(
       });
 
       if (rejectedWorkers.length === 0) {
-        return res.json({ success: true, message: "No rejected AI workers found" });
+        return res.json({
+          success: true,
+          message: "No rejected AI workers found",
+        });
       }
 
       for (const worker of rejectedWorkers) {
@@ -106,7 +144,9 @@ export const deleteRejectedWorkers = catchAsync(
       });
     } catch (error: any) {
       console.error("Error deleting rejected workers:", error);
-      return next(new ErrorHandler(error.message || "Internal Server Error", 500));
+      return next(
+        new ErrorHandler(error.message || "Internal Server Error", 500)
+      );
     }
   }
 );
@@ -119,21 +159,10 @@ export const approveAIWorkers = catchAsync(
         where: {
           status: "APPROVED",
         },
-        select: {
-          id: true,
-          name: true,
-          description: true,
-          tags: true,
-          filePath: true,
-          inputSchema: true,
-          outputSchema: true,
-          developerId: true,
-          pricePerRun: true,
-          status: true,
-        },
+        select: aiWorkerSelectFields,
       });
 
-      if (!aiApprovedWorkers) {
+      if (aiApprovedWorkers.length === 0) {
         return next(new ErrorHandler("No approved AI Workers found", 404));
       }
       res.json({ success: true, aiApprovedWorkers });
@@ -149,19 +178,21 @@ export const getMyPurchasedAIWorkers = catchAsync(
     try {
       const id = req.user.id; // Assuming you get the userId from the request params
 
-      const userWithPurchasedWorkers = await prisma.user.findMany({
+      const userWithPurchasedWorkers = await prisma.user.findUnique({
         where: {
           id: id,
         },
         include: {
-          purchasedAIWorkers: true,
+          purchases: true,
         },
       });
 
-      if (!userWithPurchasedWorkers) {
+      if (
+        !userWithPurchasedWorkers ||
+        userWithPurchasedWorkers.purchases.length === 0
+      ) {
         return next(new ErrorHandler("No purchased AI Workers found", 404));
       }
-
       res.json({ success: true, userWithPurchasedWorkers });
     } catch (error: any) {
       console.log(error);
@@ -170,7 +201,7 @@ export const getMyPurchasedAIWorkers = catchAsync(
   }
 );
 
-//Get All AI Workers
+//Get All AI Workers for Admin
 export const getsAllAIWorkers = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
     try {
@@ -199,6 +230,7 @@ export const getsAllAIWorkers = catchAsync(
   }
 );
 
+//Get AI Worker by ID for Admin
 export const getAIWorkerById = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
     try {
@@ -207,18 +239,7 @@ export const getAIWorkerById = catchAsync(
         where: {
           id,
         },
-        select: {
-          id: true,
-          name: true,
-          description: true,
-          tags: true,
-          filePath: true,
-          inputSchema: true,
-          outputSchema: true,
-          developerId: true,
-          pricePerRun: true,
-          status: true,
-        },
+        select: aiWorkerSelectFields,
       });
       if (!aiWorker) {
         return next(new ErrorHandler("AI Worker not found", 404));
@@ -231,3 +252,95 @@ export const getAIWorkerById = catchAsync(
   }
 );
 
+//Get all AI Workers for Users
+export const getAllAIWorkersForUsers = catchAsync(
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const allAIWorkers = await prisma.aIWorker.findMany({
+        where: {
+          status: "APPROVED",
+        },
+        select: aiWorkerSelectFields,
+      });
+      if (!allAIWorkers) {
+        return next(new ErrorHandler("No AI Workers found", 404));
+      }
+      res.json({ success: true, allAIWorkers });
+    } catch (error: any) {
+      console.log(error);
+      return next(new ErrorHandler(error.message, 400));
+    }
+  }
+);
+
+//Get AI Worker by ID for Users
+export const getAIWorkerByIdForUsers = catchAsync(
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { id } = req.params; // For AI Worker ID
+      const aiWorker = await prisma.aIWorker.findUnique({
+        where: {
+          id, status: "APPROVED",
+        },
+        select: aiWorkerSelectFields,
+      });
+      if (!aiWorker) {
+        return next(new ErrorHandler("AI Worker not found", 404));
+      }
+      res.json({ success: true, aiWorker });
+    } catch (error: any) {
+      console.log(error);
+      return next(new ErrorHandler(error.message, 400));
+    }
+  }
+);
+
+//Rent AI Worker
+// export const rentAIWorker = catchAsync(
+//   async (req: UserRequest, res: Response, next: NextFunction) => {
+//     try {
+//       const { id } = req.params; // For AI Worker ID
+//       const userId = req.user.id;
+
+//       const aiWorker = await prisma.aIWorker.findUnique({
+//         where: {
+//           id,
+//         },
+//         select: aiWorkerSelectFields,
+//       });
+//       if (!aiWorker) {
+//         return next(new ErrorHandler("AI Worker not found", 404));
+//       }
+
+//       const user = await prisma.user.findUnique({
+//         where: {
+//           id: userId,
+//         },
+//       });
+//       if (!user) {
+//         return next(new ErrorHandler("User not found", 404));
+//       }
+
+//       if (user.balance < aiWorker.pricePerRun) {
+//         return next(
+//           new ErrorHandler("Insufficient balance to rent this AI Worker", 400)
+//         );
+//       }
+
+//       await prisma.user.update({
+//         where: { id: userId },
+//         data: { balance: user.balance - aiWorker.pricePerRun },
+//       });
+
+//       await prisma.aIWorker.update({
+//         where: { id },
+//         data: { status: "RENTED" },
+//       });
+
+//       res.json({ success: true, message: "AI Worker rented successfully" });
+//     } catch (error: any) {
+//       console.log(error);
+//       return next(new ErrorHandler(error.message, 400));
+//     }
+//   }
+// );
