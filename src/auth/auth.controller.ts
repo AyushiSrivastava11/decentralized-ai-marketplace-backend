@@ -4,6 +4,40 @@ import { hashPassword, verifyPassword, generateToken } from "./auth.utils";
 import { catchAsync } from "../middlewares/catchAsyncError";
 import ErrorHandler from "../utils/ErrorHandler";
 
+interface AuthPayload {
+  id: string;
+  role: string;
+}
+
+interface AuthRequest extends Request {
+  user?: AuthPayload;
+}
+
+const cookieOptions = {
+  httpOnly: true,
+  secure: process.env.NODE_ENV === "production",
+  sameSite: "lax" as const,
+  maxAge: 24 * 60 * 60 * 1000, // 1 day
+};
+
+export const checkAuth = catchAsync(
+  async (req: AuthRequest, res: Response, next: NextFunction) => {
+    try{
+    if (!req.user) return next(new ErrorHandler("Not authenticated", 401));
+
+    return res.status(200).json({
+      user: {
+        id: req.user.id,
+        role: req.user.role
+      },
+    });
+    }catch(error: any) {
+      console.error("Error during authentication check:", error);
+      return next(new ErrorHandler(error.message, 500));
+    }
+  }
+);
+
 export const register = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
     try {
@@ -19,12 +53,7 @@ export const register = catchAsync(
       });
 
       const token = generateToken(user);
-      res.cookie("token", token, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "lax",
-        maxAge: 24 * 60 * 60 * 1000, // 1 day
-      });
+      res.cookie("token", token, cookieOptions);
       res.json({
         user: {
           id: user.id,
@@ -54,12 +83,7 @@ export const login = catchAsync(
         if (!valid) return next(new ErrorHandler("Invalid Credentials", 401));
 
         const token = generateToken(user);
-        res.cookie("token", token, {
-          httpOnly: true,
-          secure: process.env.NODE_ENV === "production",
-          sameSite: "lax",
-          maxAge: 24 * 60 * 60 * 1000, // 1 day
-        });
+        res.cookie("token", token, cookieOptions);
         res.json({
           user: {
             id: user.id,
