@@ -7,6 +7,8 @@ import ErrorHandler from "../utils/ErrorHandler";
 interface AuthPayload {
   id: string;
   role: string;
+  email: string;
+  name: string;
 }
 
 interface AuthRequest extends Request {
@@ -28,7 +30,9 @@ export const checkAuth = catchAsync(
     return res.status(200).json({
       user: {
         id: req.user.id,
-        role: req.user.role
+        role: req.user.role,
+        email: req.user.email,
+        name: req.user.name,
       },
     });
     }catch(error: any) {

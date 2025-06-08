@@ -81,6 +81,17 @@ model Review {
   user        User      @relation(fields: [userId], references: [id])
 }
 
+model Transaction {
+  id                String   @id @default(uuid())
+  userId            String
+  agentId           String
+  razorpayOrderId   String
+  razorpayPaymentId String
+  amount            Int
+  status            String
+  createdAt         DateTime @default(now())
+}
+
 enum Role {
   USER
   ADMIN
