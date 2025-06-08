@@ -179,7 +179,8 @@ export const approvedAIWorkers = catchAsync(
       });
 
       if (aiApprovedWorkers.length === 0) {
-        return next(new ErrorHandler("No approved AI Workers found", 404));
+        // return next(new ErrorHandler("No approved AI Workers found", 404));
+        return res.json({ success: true, aiApprovedWorkers: [] });
       }
       res.json({ success: true, aiApprovedWorkers });
     } catch (error: any) {
