@@ -26,16 +26,20 @@ export const checkAuth = catchAsync(
   async (req: AuthRequest, res: Response, next: NextFunction) => {
     try{
     if (!req.user) return next(new ErrorHandler("Not authenticated", 401));
+      // console.log("Authenticated user:", req.user);
+      const user = await prisma.user.findUnique({
+        where: { id: req.user.id },
+      });
 
-    return res.status(200).json({
-      user: {
-        id: req.user.id,
-        role: req.user.role,
-        email: req.user.email,
-        name: req.user.name,
-      },
-    });
-    }catch(error: any) {
+      if (!user) return next(new ErrorHandler("User not found", 404));
+
+      return res.status(200).json({
+          id: user.id,
+          role: user.role,
+          email: user.email,
+          name: user.name,
+      });
+    } catch (error: any) {
       console.error("Error during authentication check:", error);
       return next(new ErrorHandler(error.message, 500));
     }
@@ -59,12 +63,10 @@ export const register = catchAsync(
       const token = generateToken(user);
       res.cookie("token", token, cookieOptions);
       res.json({
-        user: {
           id: user.id,
           name: user.name,
           email: user.email,
           role: user.role,
-        },
       });
     } catch (error: any) {
       console.error("Error during registration:", error);
@@ -89,12 +91,10 @@ export const login = catchAsync(
         const token = generateToken(user);
         res.cookie("token", token, cookieOptions);
         res.json({
-          user: {
             id: user.id,
             name: user.name,
             email: user.email,
             role: user.role,
-          },
         });
       }
     } catch (error: any) {
