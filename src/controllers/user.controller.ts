@@ -118,12 +118,35 @@ export const getAIWorkerByIdForUsers = catchAsync(
     try {
       const { id } = req.params; // For AI Worker ID
       const aiWorker = await prisma.aIWorker.findUnique({
-        where: {
-          id, status: "APPROVED",
-          // isPublic: true, // Ensure the AI Worker is public
-        },
-        select: aiWorkerForAllDetails,
-      });
+  where: {
+    id,
+    status: "APPROVED",
+  },
+  select: {
+    id: true,
+    name: true,
+    description: true,
+    tags: true,
+    inputSchema: true,
+    outputSchema: true,
+    developerId: true,
+    pricePerRun: true,
+    isPublic: true,
+    filePath: true,
+    createdAt: true,
+    updatedAt: true,
+    status: true,
+    rejectionReason: true,
+    developer: {
+      select: {
+        id: true,
+        name: true,
+        email: true,
+      },
+    },
+  },
+});
+
       console.log("AI Worker Details:", aiWorker);
       if (!aiWorker) {
         return next(new ErrorHandler("AI Worker not found", 404));

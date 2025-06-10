@@ -21,31 +21,31 @@ async function main() {
   });
 
   // Create Regular User
-  const user = await prisma.user.upsert({
-    where: { email: 'user@example.com' },
-    update: {},
-    create: {
-      name: 'Regular User',
-      email: 'user@example.com',
-      passwordHash: hashedPassword,
-      // role: 'USER'
-    }
-  });
+  // const user = await prisma.user.upsert({
+  //   where: { email: 'user@example.com' },
+  //   update: {},
+  //   create: {
+  //     name: 'Regular User',
+  //     email: 'user@example.com',
+  //     passwordHash: hashedPassword,
+  //     // role: 'USER'
+  //   }
+  // });
 
   // Create Developer (user with isDeveloper: true)
-  const developer = await prisma.user.upsert({
-    where: { email: 'dev@example.com' },
-    update: {},
-    create: {
-      name: 'AI Developer',
-      email: 'dev@example.com',
-      passwordHash: hashedPassword,
-      role: 'USER',
-      isDeveloper: true
-    }
-  });
+  // const developer = await prisma.user.upsert({
+  //   where: { email: 'dev@example.com' },
+  //   update: {},
+  //   create: {
+  //     name: 'AI Developer',
+  //     email: 'dev@example.com',
+  //     passwordHash: hashedPassword,
+  //     role: 'USER',
+  //     isDeveloper: true
+  //   }
+  // });
 
-  console.log({ admin, user, developer });
+  // console.log({ admin, user, developer });
 }
 
 main()
