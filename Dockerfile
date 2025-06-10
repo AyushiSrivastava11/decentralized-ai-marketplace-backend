@@ -1,8 +1,8 @@
 # Use official Node image
-FROM node:18-alpine
+FROM node:20-alpine
 
 # Set working directory
-WORKDIR /src/app
+WORKDIR /usr/src/app
 
 # Copy package files and install dependencies
 COPY package*.json ./
@@ -12,7 +12,7 @@ RUN npm install
 COPY . .
 
 # Expose port (adjust as needed)
-EXPOSE 4000
+ENV PORT 8000
 
 # Run the backend
-CMD ["npm", "run", "dev"]
+CMD ["npm", "run", "start"]

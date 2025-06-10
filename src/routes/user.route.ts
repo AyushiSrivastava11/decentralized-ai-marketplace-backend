@@ -3,13 +3,16 @@ import {
   deleteMyProfile,
   getMyProfile,
   updateMyProfile,
-} from "../controllers/user.controller"
-import {authenticate, authorize} from "../auth/auth.middleware";
+  getAIWorkerByIdForUsers,
+} from "../controllers/user.controller";
+import { authenticate, authorize } from "../auth/auth.middleware";
 
 const router = Router();
 
-router.get("/me", authenticate, getMyProfile);
-router.put("/me", authenticate, updateMyProfile);
-router.delete("/delete", authenticate, deleteMyProfile);
+router.use(authenticate);
+router.get("/me", getMyProfile);
+router.put("/me", updateMyProfile);
+router.delete("/delete", deleteMyProfile);
+router.get("/ai-worker/:id", getAIWorkerByIdForUsers);
 
 export default router;

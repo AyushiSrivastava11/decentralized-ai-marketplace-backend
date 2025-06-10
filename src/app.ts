@@ -5,7 +5,7 @@ import aiworkerRoutes from "./routes/aiworker.routes";
 import adminRoutes from "./routes/admin.routes";
 import authRoutes from "./auth/auth.routes";
 import userRoutes from "./routes/user.route";
-import paymentRoutes from "./routes/payment.routes";
+import paymentRoutes from "./routes/payment.routes"
 import { authenticate, authorize } from "./auth/auth.middleware";
 
 export const app = express();

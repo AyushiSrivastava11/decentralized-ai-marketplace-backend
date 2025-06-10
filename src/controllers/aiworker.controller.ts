@@ -38,6 +38,9 @@ export const uploadWorker = catchAsync(
       const developerId = req.user.id;
       const file = req.file;
 
+      if(!(req?.user.isDeveloper)) {
+        return next(new ErrorHandler("You are not authorized to upload AI Workers", 403));
+      }
       if (!name || !description || !tags || !inputSchema || !outputSchema) {
         return next(new ErrorHandler("Please fill all the fields", 400));
       }
@@ -52,12 +55,7 @@ export const uploadWorker = catchAsync(
         );
       }
 
-      // const parsedPrice = parseFloat(pricePerRun);
-      // if (isNaN(parsedPrice) || parsedPrice <= 0) {
-      //   return next(
-      //     new ErrorHandler("Price per run must be a positive number", 400)
-      //   );
-      // }
+    
       if (!file) {
         // return res.status(400).json({ success: false, message: "No file uploaded" });
         return next(new ErrorHandler("No file uploaded", 400));
@@ -129,44 +127,6 @@ export const executeWorker = catchAsync(
   }
 );
 
-
-//Unchecked
-export const deleteRejectedWorkers = catchAsync(
-  async (req: Request, res: Response, next: NextFunction) => {
-    try {
-      const rejectedWorkers = await prisma.aIWorker.findMany({
-        where: { status: "REJECTED" },
-      });
-
-      if (rejectedWorkers.length === 0) {
-        return res.json({
-          success: true,
-          message: "No rejected AI workers found",
-        });
-      }
-
-      for (const worker of rejectedWorkers) {
-        try {
-          await deleteFromGCS(worker.filePath);
-          await prisma.aIWorker.delete({ where: { id: worker.id } });
-        } catch (err: any) {
-          console.error(`Failed to delete worker ${worker.id}:`, err.message);
-        }
-      }
-
-      res.json({
-        success: true,
-        message: `Deleted ${rejectedWorkers.length} rejected AI worker(s)`,
-      });
-    } catch (error: any) {
-      console.error("Error deleting rejected workers:", error);
-      return next(
-        new ErrorHandler(error.message || "Internal Server Error", 500)
-      );
-    }
-  }
-);
-
 //Get Approved AI Workers
 export const approvedAIWorkers = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
@@ -174,6 +134,7 @@ export const approvedAIWorkers = catchAsync(
       const aiApprovedWorkers = await prisma.aIWorker.findMany({
         where: {
           status: "APPROVED",
+          // isPublic: true, 
         },
         select: aiWorkerSelectFields,
       });
@@ -189,6 +150,9 @@ export const approvedAIWorkers = catchAsync(
     }
   }
 );
+
+
+//Unchecked
 
 export const getMyPurchasedAIWorkers = catchAsync(
   async (req: UserRequest, res: Response, next: NextFunction) => {
@@ -218,80 +182,10 @@ export const getMyPurchasedAIWorkers = catchAsync(
   }
 );
 
-//Get All AI Workers for Admin
-export const getsAllAIWorkers = catchAsync(
-  async (req: Request, res: Response, next: NextFunction) => {
-    try {
-      const allAIWorkers = await prisma.aIWorker.findMany({
-        select: {
-          id: true,
-          name: true,
-          description: true,
-          tags: true,
-          filePath: true,
-          inputSchema: true,
-          outputSchema: true,
-          developerId: true,
-          pricePerRun: true,
-          status: true,
-        },
-      });
-      if (!allAIWorkers) {
-        return next(new ErrorHandler("No AI Workers found", 404));
-      }
-      res.json({ success: true, allAIWorkers });
-    } catch (error: any) {
-      console.log(error);
-      return next(new ErrorHandler(error.message, 400));
-    }
-  }
-);
-
-//Get AI Worker by ID for Admin
-export const getAIWorkerById = catchAsync(
-  async (req: Request, res: Response, next: NextFunction) => {
-    try {
-      const { id } = req.params; // For AI Worker ID
-      const aiWorker = await prisma.aIWorker.findUnique({
-        where: {
-          id,
-        },
-        select: aiWorkerSelectFields,
-      });
-      if (!aiWorker) {
-        return next(new ErrorHandler("AI Worker not found", 404));
-      }
-      res.json({ success: true, aiWorker });
-    } catch (error: any) {
-      console.log(error);
-      return next(new ErrorHandler(error.message, 400));
-    }
-  }
-);
 
 
 
-//Get AI Worker by ID for Users
-export const getAIWorkerByIdForUsers = catchAsync(
-  async (req: Request, res: Response, next: NextFunction) => {
-    try {
-      const { id } = req.params; // For AI Worker ID
-      const aiWorker = await prisma.aIWorker.findUnique({
-        where: {
-          id, status: "APPROVED",
-        },
-        select: aiWorkerSelectFields,
-      });
-      if (!aiWorker) {
-        return next(new ErrorHandler("AI Worker not found", 404));
-      }
-      res.json({ success: true, aiWorker });
-    } catch (error: any) {
-      console.log(error);
-      return next(new ErrorHandler(error.message, 400));
-    }
-  }
-);
+
 
 //Rent AI Worker
 // export const rentAIWorker = catchAsync(

@@ -3,17 +3,16 @@ import prisma from "../database/prismaClient";
 import { hashPassword, verifyPassword, generateToken } from "./auth.utils";
 import { catchAsync } from "../middlewares/catchAsyncError";
 import ErrorHandler from "../utils/ErrorHandler";
+// import { User } from "@prisma/client";
+import { UserRequest } from "../controllers/admin.controller";
 
-interface AuthPayload {
-  id: string;
-  role: string;
-  email: string;
-  name: string;
-}
+// interface AuthPayload {
+//   user: User;
+// }
 
-interface AuthRequest extends Request {
-  user?: AuthPayload;
-}
+// interface AuthRequest extends Request {
+//   user?: AuthPayload;
+// }
 
 const cookieOptions = {
   httpOnly: true,
@@ -23,21 +22,25 @@ const cookieOptions = {
 };
 
 export const checkAuth = catchAsync(
-  async (req: AuthRequest, res: Response, next: NextFunction) => {
-    try{
-    if (!req.user) return next(new ErrorHandler("Not authenticated", 401));
+  async (req: UserRequest, res: Response, next: NextFunction) => {
+    try {
+      if (!req.user) return next(new ErrorHandler("Not authenticated", 401));
       // console.log("Authenticated user:", req.user);
       const user = await prisma.user.findUnique({
         where: { id: req.user.id },
+        include:{
+          // purchases:true,
+          uploadedWorkers:true,
+          jobs:true,
+          reviews:true
+        }
       });
 
       if (!user) return next(new ErrorHandler("User not found", 404));
 
+      const { passwordHash, ...userWithoutPassword } = user;
       return res.status(200).json({
-          id: user.id,
-          role: user.role,
-          email: user.email,
-          name: user.name,
+        user: userWithoutPassword,
       });
     } catch (error: any) {
       console.error("Error during authentication check:", error);
@@ -63,10 +66,10 @@ export const register = catchAsync(
       const token = generateToken(user);
       res.cookie("token", token, cookieOptions);
       res.json({
-          id: user.id,
-          name: user.name,
-          email: user.email,
-          role: user.role,
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
       });
     } catch (error: any) {
       console.error("Error during registration:", error);
@@ -91,10 +94,11 @@ export const login = catchAsync(
         const token = generateToken(user);
         res.cookie("token", token, cookieOptions);
         res.json({
-            id: user.id,
-            name: user.name,
-            email: user.email,
-            role: user.role,
+          id: user.id,
+          name: user.name,
+          email: user.email,
+          role: user.role,
+          isDeveloper: user.isDeveloper,
         });
       }
     } catch (error: any) {
@@ -112,8 +116,6 @@ export const forgotPassword = catchAsync(
 
       const user = await prisma.user.findUnique({ where: { email } });
       if (!user) res.status(404).json({ message: "User not found" });
-
-     
 
       res.json({ message: "Password reset link sent to your email" });
     } catch (error: any) {
