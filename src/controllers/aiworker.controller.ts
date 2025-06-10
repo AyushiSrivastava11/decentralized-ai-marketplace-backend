@@ -38,24 +38,29 @@ export const uploadWorker = catchAsync(
       const developerId = req.user.id;
       const file = req.file;
 
-      if(!(req?.user.isDeveloper)) {
+      const user = await prisma.user.findUnique({
+        where: { id: developerId },
+      });
+
+      if (!(user?.isDeveloper)) {
         return next(new ErrorHandler("You are not authorized to upload AI Workers", 403));
       }
-      if (!name || !description || !tags || !inputSchema || !outputSchema) {
+      if (!name || !description || !tags || !pricePerRun) {
         return next(new ErrorHandler("Please fill all the fields", 400));
       }
 
       let parsedInputSchema, parsedOutputSchema;
-      try {
-        parsedInputSchema = JSON.parse(inputSchema);
-        parsedOutputSchema = JSON.parse(outputSchema);
-      } catch (error) {
-        return next(
-          new ErrorHandler("Invalid JSON format for input/output schema", 400)
-        );
+      if (inputSchema && outputSchema) {
+        try {
+          parsedInputSchema = JSON.parse(inputSchema);
+          parsedOutputSchema = JSON.parse(outputSchema);
+        } catch (error) {
+          return next(
+            new ErrorHandler("Invalid JSON format for input/output schema", 400)
+          );
+        }
       }
 
-    
       if (!file) {
         // return res.status(400).json({ success: false, message: "No file uploaded" });
         return next(new ErrorHandler("No file uploaded", 400));

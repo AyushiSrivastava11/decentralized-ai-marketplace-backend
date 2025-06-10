@@ -12,6 +12,6 @@ router.patch("/reject-worker/:id", rejectWorker);
 router.get("/get-all-users", getAllUsers);
 router.get("/get-all-aiworkers", getsAllAIWorkers);
 router.get("/get-aiworkers/:id", getAIWorkerById);
-// router.delete("/delete-rejected-workers", deleteRejectedWorkers);
+router.delete("/delete-rejected-workers", deleteRejectedWorkers);
 
 export default router;

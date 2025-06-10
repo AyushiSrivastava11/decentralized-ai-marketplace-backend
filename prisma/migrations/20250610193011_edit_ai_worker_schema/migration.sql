@@ -1,0 +1,4 @@
+-- AlterTable
+ALTER TABLE "AIWorker" ALTER COLUMN "inputSchema" DROP NOT NULL,
+ALTER COLUMN "outputSchema" DROP NOT NULL,
+ALTER COLUMN "isPublic" SET DEFAULT false;
