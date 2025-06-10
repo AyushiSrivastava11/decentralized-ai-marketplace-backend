@@ -13,6 +13,6 @@ router.use(authenticate);
 router.get("/me", getMyProfile);
 router.put("/me", updateMyProfile);
 router.delete("/delete", deleteMyProfile);
-router.get("/ai-worker/:id", getAIWorkerByIdForUsers);
+router.get("/get-aiworker/:id", getAIWorkerByIdForUsers);
 
 export default router;
