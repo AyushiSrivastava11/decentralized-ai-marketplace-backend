@@ -20,6 +20,7 @@ model User {
   uploadedWorkers   AIWorker[]      @relation("UserUploads")
   jobs              Job[]
   reviews           Review[]
+  orders            Order[]
 }
 
 model AIWorker {
@@ -41,13 +42,14 @@ model AIWorker {
   status           WorkerStatus    @default(PENDING)
   rejectionReason  String?
   purchases        UserPurchase[]
+  orders           Order[]
 }
 
 model UserPurchase {
   id           String          @id @default(uuid())
   userId       String
   aiWorkerId   String
-  status       PurchaseStatus  @default(PENDING)
+  status       OrderStatus  @default(PENDING)
   createdAt    DateTime        @default(now())
   updatedAt    DateTime        @updatedAt
 
@@ -81,16 +83,28 @@ model Review {
   user        User      @relation(fields: [userId], references: [id])
 }
 
-model Transaction {
-  id                String   @id @default(uuid())
-  userId            String
-  agentId           String
-  razorpayOrderId   String
-  razorpayPaymentId String
-  amount            Int
-  status            String
-  createdAt         DateTime @default(now())
+model Order {
+  id                  String   @id @default(cuid())
+  user                User     @relation(fields: [userId], references: [id])
+  userId              String
+
+  aiWorker            AIWorker @relation(fields: [aiWorkerId], references: [id])
+  aiWorkerId          String
+
+  cycles              Int
+  totalAmount         Int      // in INR (or paise if you're storing actual amount * 100)
+
+  razorpayOrderId     String
+  razorpayPaymentId   String
+  razorpaySignature   String
+
+  status              OrderStatus @default(PENDING)
+
+  invoiceFilename     String?     // e.g., invoice_order1234.pdf
+
+  createdAt           DateTime    @default(now())
 }
+
 
 enum Role {
   USER
@@ -110,8 +124,9 @@ enum WorkerStatus {
   REJECTED
 }
 
-enum PurchaseStatus {
+enum OrderStatus {
   PENDING
   PAID
+  FAILED
   CANCELLED
 }
