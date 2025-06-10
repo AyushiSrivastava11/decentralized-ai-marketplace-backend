@@ -3,11 +3,22 @@ import { User } from "@prisma/client";
 import prisma from "../database/prismaClient";
 import { catchAsync } from "../middlewares/catchAsyncError";
 import ErrorHandler from "../utils/ErrorHandler";
+import { aiWorkerSelectFields } from "./aiworker.controller";
 
 export interface UserRequest extends Request {
   user: User;
 }
-
+export const aiWorkerForAllDetails = {
+  id: true,
+  name: true,
+  description: true,
+  tags: true,
+  // filePath: true,
+  inputSchema: true,
+  outputSchema: true,
+  developerId: true,
+  pricePerRun: true,
+};
 
 export const getMyProfile = catchAsync(
   async (req: UserRequest, res: Response, next: NextFunction) => {
@@ -74,16 +85,53 @@ export const updateMyProfile = catchAsync(
 //Delete My Profile
 export const deleteMyProfile = catchAsync(
   async (req: UserRequest, res: Response, next: NextFunction) => {
-    try {
-      const userId = req.user.id;
+ try {
+  const userId = req.user.id;
 
-      await prisma.user.delete({
-        where: { id: userId },
-      });
+  // 1. Delete dependent AIWorker records
+  await prisma.aIWorker.deleteMany({
+    where: { developerId: userId },
+  });
 
-      res.json({ success: true, message: "Profile Deleted Successfully" });
-    } catch (error) {
-      console.error("Delete profile error:", error);
-      return next(new ErrorHandler("Internal server error", 500));
-    }
+  // 2. Delete dependent Job records
+  await prisma.job.deleteMany({
+    where: { userId: userId },
+  });
+
+  // 3. Now delete the user
+  await prisma.user.delete({
+    where: { id: userId },
+  });
+
+  res.json({ success: true, message: "Profile Deleted Successfully" });
+} catch (error) {
+  console.error("Delete profile error:", error);
+  return next(new ErrorHandler("Internal server error", 500));
+}
+
+
 });
+
+//Get AI Worker by ID for Users
+export const getAIWorkerByIdForUsers = catchAsync(
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { id } = req.params; // For AI Worker ID
+      const aiWorker = await prisma.aIWorker.findUnique({
+        where: {
+          id, status: "APPROVED",
+          // isPublic: true, // Ensure the AI Worker is public
+        },
+        select: aiWorkerForAllDetails,
+      });
+      console.log("AI Worker Details:", aiWorker);
+      if (!aiWorker) {
+        return next(new ErrorHandler("AI Worker not found", 404));
+      }
+      res.json({ success: true, aiWorker });
+    } catch (error: any) {
+      console.log(error);
+      return next(new ErrorHandler(error.message, 400));
+    }
+  }
+);

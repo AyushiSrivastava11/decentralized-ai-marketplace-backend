@@ -1,7 +1,6 @@
 import express from "express";
 import { authenticate, authorize } from "../auth/auth.middleware";
-import { approveWorker, getAllUsers, getPendingWorkers, rejectWorker } from "../controllers/admin.controller";
-import {getAIWorkerById, getsAllAIWorkers} from "../controllers/aiworker.controller";
+import { approveWorker,getAIWorkerById,getsAllAIWorkers,deleteRejectedWorkers, getAllUsers, getPendingWorkers, rejectWorker } from "../controllers/admin.controller";
 const router = express.Router();
 
 router.use(authenticate);
@@ -13,5 +12,6 @@ router.patch("/reject-worker/:id", rejectWorker);
 router.get("/get-all-users", getAllUsers);
 router.get("/get-all-aiworkers", getsAllAIWorkers);
 router.get("/get-aiworkers/:id", getAIWorkerById);
+// router.delete("/delete-rejected-workers", deleteRejectedWorkers);
 
 export default router;
