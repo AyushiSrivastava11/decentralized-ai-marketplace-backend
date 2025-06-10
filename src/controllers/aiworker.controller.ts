@@ -52,12 +52,7 @@ export const uploadWorker = catchAsync(
         );
       }
 
-      // const parsedPrice = parseFloat(pricePerRun);
-      // if (isNaN(parsedPrice) || parsedPrice <= 0) {
-      //   return next(
-      //     new ErrorHandler("Price per run must be a positive number", 400)
-      //   );
-      // }
+    
       if (!file) {
         // return res.status(400).json({ success: false, message: "No file uploaded" });
         return next(new ErrorHandler("No file uploaded", 400));
@@ -239,6 +234,7 @@ export const getsAllAIWorkers = catchAsync(
       if (!allAIWorkers) {
         return next(new ErrorHandler("No AI Workers found", 404));
       }
+      
       res.json({ success: true, allAIWorkers });
     } catch (error: any) {
       console.log(error);
