@@ -101,7 +101,7 @@ export const verifyPayment = catchAsync(
 
     res.json({
       success: true,
-      invoice: `${process.env.BASE_URL}/invoices/${invoicePath}`,
+      invoice: `${process.env.API_BASE_URL}/invoices/${invoicePath}`,
     });
   }
 );

@@ -12,6 +12,7 @@ import path from "path";
 export const app = express();
 
 app.use(express.json());
+const FRONT_PORT = process.env.FRONT_PORT || 5173;
 
 // app.get('/', (req, res) => {
 //   res.send('Hello World!');
@@ -20,7 +21,7 @@ app.use(express.json());
 app.use(cookieParser());
 
 app.use(cors({
-  origin: "http://localhost:5173",
+  origin: "http://localhost:" + FRONT_PORT,
   credentials: true,
 }));
 

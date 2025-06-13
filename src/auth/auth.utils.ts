@@ -13,6 +13,7 @@ export const verifyPassword = async (password: string, hash: string) => {
 };
 
 export const generateToken = (user: User) => {
+  console.log("[generateToken] JWT_SECRET:", JWT_SECRET);
   return jwt.sign(
     { id: user.id, role: user.role },
     JWT_SECRET,
