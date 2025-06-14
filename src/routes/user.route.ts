@@ -4,6 +4,7 @@ import {
   getMyProfile,
   updateMyProfile,
   getAIWorkerByIdForUsers,
+  checkPurchaseStatus,
 } from "../controllers/user.controller";
 import { authenticate, authorize } from "../auth/auth.middleware";
 
@@ -14,5 +15,6 @@ router.get("/me", getMyProfile);
 router.put("/me", updateMyProfile);
 router.delete("/delete", deleteMyProfile);
 router.get("/get-aiworker/:id", getAIWorkerByIdForUsers);
+router.get("/:userId/purchased-workers/:agentId", checkPurchaseStatus);
 
 export default router;

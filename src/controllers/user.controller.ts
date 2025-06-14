@@ -158,3 +158,27 @@ export const getAIWorkerByIdForUsers = catchAsync(
     }
   }
 );
+
+export const checkPurchaseStatus = catchAsync(
+  async (req: UserRequest, res: Response, next: NextFunction) => {
+    const { userId, workerId } = req.params;
+
+  try {
+    const order = await prisma.order.findFirst({
+      where: {
+        userId,
+        aiWorkerId: workerId,
+        status: "PAID",
+      },
+    });
+
+    if (order) {
+      return res.status(200).json({ owns: true });
+    } else {
+      return res.status(200).json({ owns: false });
+    }
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ message: "Server error" });
+  }
+  });
