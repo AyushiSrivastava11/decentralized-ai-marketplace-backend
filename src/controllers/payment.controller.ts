@@ -31,7 +31,6 @@ export const createOrder = catchAsync(async (req: Request, res: Response, next: 
 
   return res.json({
     order,
-    amount,
     aiWorkerName: aiWorker.name,
   });
 }catch (error) {
@@ -101,7 +100,7 @@ export const verifyPayment = catchAsync(
 
     res.json({
       success: true,
-      invoice: `${process.env.API_BASE_URL}/invoices/${invoicePath}`,
+      invoice: `invoices/${invoicePath}`,
     });
   }
 );
