@@ -5,6 +5,7 @@ import { runAIWorker } from "../services/ai-executor.service";
 import { catchAsync } from "../middlewares/catchAsyncError";
 import ErrorHandler from "../utils/ErrorHandler";
 import { User } from "@prisma/client";
+import { ApiKeyRequest } from "../middlewares/verifyApiKey";
 
 interface UserRequest extends Request {
   user: User;
@@ -21,6 +22,11 @@ export const aiWorkerSelectFields = {
   developerId: true,
   pricePerRun: true,
   status: true,
+};
+
+const extractFileName = (filePath: string): string | null => {
+  const match = filePath.match(/\/agents\/(.+)\.zip$/);
+  return match ? match[1] : null;
 };
 
 export const uploadWorker = catchAsync(
@@ -42,8 +48,10 @@ export const uploadWorker = catchAsync(
         where: { id: developerId },
       });
 
-      if (!(user?.isDeveloper)) {
-        return next(new ErrorHandler("You are not authorized to upload AI Workers", 403));
+      if (!user?.isDeveloper) {
+        return next(
+          new ErrorHandler("You are not authorized to upload AI Workers", 403)
+        );
       }
       if (!name || !description || !tags || !pricePerRun) {
         return next(new ErrorHandler("Please fill all the fields", 400));
@@ -97,9 +105,21 @@ export const uploadWorker = catchAsync(
 export const executeWorker = catchAsync(
   async (req: UserRequest, res: Response, next: NextFunction) => {
     try {
-      const { id } = req.params; 
-      const userId = req.user.id; 
-      const { input, path } = req.body;
+      const { id } = req.params;
+      const userId = req.user.id;
+      const { input } = req.body;
+      const aiWorker = await prisma.aIWorker.findUnique({
+        where: { id },
+        select: { filePath: true },
+      });
+      if (!aiWorker || !aiWorker.filePath) {
+        return next(new ErrorHandler("AI Worker file not found", 404));
+      }
+
+      const path = extractFileName(aiWorker.filePath);
+      if (!path) {
+        return next(new ErrorHandler("Invalid AI Worker file path", 400));
+      }
       // const purchase = await prisma.userPurchase.findUnique({
       //   where: {
       //     userId_aiWorkerId: {
@@ -109,10 +129,26 @@ export const executeWorker = catchAsync(
       //   },
       // });
 
-
       // if (!purchase || purchase.status !== "PAID") {
       //   return next(new ErrorHandler("You have not purchased access to this AI worker.", 403));
       // }
+      const activeOrder = await prisma.order.findFirst({
+        where: {
+          userId,
+          aiWorkerId: id,
+          status: "PAID",
+          cycles: { gt: 0 },
+        },
+      });
+
+      if (!activeOrder) {
+        return next(
+          new ErrorHandler(
+            "No remaining execution cycles. Please purchase more.",
+            403
+          )
+        );
+      }
 
       const job = await prisma.job.create({
         data: {
@@ -124,6 +160,23 @@ export const executeWorker = catchAsync(
       });
 
       const result = await runAIWorker(id, input, job.id, path);
+      if (!result) {
+        return next(new ErrorHandler("Failed to execute AI Worker", 500));
+      }
+      await prisma.order.updateMany({
+        where: {
+          userId,
+          aiWorkerId: id,
+          status: "PAID",
+          cycles: { gt: 0 },
+        },
+        data: {
+          cycles: {
+            decrement: 1,
+          },
+        },
+      });
+
       res.json(result);
     } catch (error: any) {
       console.log(error);
@@ -139,7 +192,7 @@ export const approvedAIWorkers = catchAsync(
       const aiApprovedWorkers = await prisma.aIWorker.findMany({
         where: {
           status: "APPROVED",
-          // isPublic: true, 
+          // isPublic: true,
         },
         select: aiWorkerSelectFields,
       });
@@ -156,6 +209,74 @@ export const approvedAIWorkers = catchAsync(
   }
 );
 
+//execution by api and key
+export const executionInMyCode = catchAsync(
+  async (req: ApiKeyRequest, res: Response, next: NextFunction) => {
+    const apiKey = req.apiKey; // comes from verifyApiKey
+    const { input } = req.body;
+
+    const aiWorkerId = req.params.workerId;
+    const aiWorker = await prisma.aIWorker.findUnique({
+      where: { id: aiWorkerId },
+      select: { filePath: true },
+    });
+
+    if (!aiWorker || !aiWorker.filePath) {
+      return next(new ErrorHandler("AI Worker file not found", 404));
+    }
+
+    const path = extractFileName(aiWorker.filePath);
+    if (!path) {
+      return next(new ErrorHandler("Invalid AI Worker file path", 400));
+    }
+
+    if (!apiKey) {
+      return next(new ErrorHandler("API key missing", 401));
+    }
+
+    if (apiKey.aiWorkerId !== aiWorkerId) {
+      return next(new ErrorHandler("API key doesn't match this worker.", 403));
+    }
+    if (apiKey.remainingRuns <= 0) {
+      return next(new ErrorHandler("No remaining runs for this API key.", 403));
+    }
+    const job = await prisma.job.create({
+      data: {
+        input,
+        aiWorkerId,
+        userId: apiKey.userId,
+        status: "PENDING",
+      },
+    });
+
+    const result = await runAIWorker(aiWorkerId, input, job.id, path);
+
+    await prisma.order.updateMany({
+      where: {
+        userId: apiKey.userId,
+        aiWorkerId,
+        status: "PAID",
+        cycles: { gt: 0 },
+      },
+      data: {
+        cycles: {
+          decrement: 1,
+        },
+      },
+    });
+
+    await prisma.apiKey.update({
+      where: { key: apiKey.key },
+      data: {
+        remainingRuns: {
+          decrement: 1,
+        },
+      },
+    });
+
+    res.json({ success: true, output: result });
+  }
+);
 
 //Unchecked
 
@@ -186,58 +307,3 @@ export const getMyPurchasedAIWorkers = catchAsync(
     }
   }
 );
-
-
-
-
-
-
-//Rent AI Worker
-// export const rentAIWorker = catchAsync(
-//   async (req: UserRequest, res: Response, next: NextFunction) => {
-//     try {
-//       const { id } = req.params; // For AI Worker ID
-//       const userId = req.user.id;
-
-//       const aiWorker = await prisma.aIWorker.findUnique({
-//         where: {
-//           id,
-//         },
-//         select: aiWorkerSelectFields,
-//       });
-//       if (!aiWorker) {
-//         return next(new ErrorHandler("AI Worker not found", 404));
-//       }
-
-//       const user = await prisma.user.findUnique({
-//         where: {
-//           id: userId,
-//         },
-//       });
-//       if (!user) {
-//         return next(new ErrorHandler("User not found", 404));
-//       }
-
-//       if (user.balance < aiWorker.pricePerRun) {
-//         return next(
-//           new ErrorHandler("Insufficient balance to rent this AI Worker", 400)
-//         );
-//       }
-
-//       await prisma.user.update({
-//         where: { id: userId },
-//         data: { balance: user.balance - aiWorker.pricePerRun },
-//       });
-
-//       await prisma.aIWorker.update({
-//         where: { id },
-//         data: { status: "RENTED" },
-//       });
-
-//       res.json({ success: true, message: "AI Worker rented successfully" });
-//     } catch (error: any) {
-//       console.log(error);
-//       return next(new ErrorHandler(error.message, 400));
-//     }
-//   }
-// );
