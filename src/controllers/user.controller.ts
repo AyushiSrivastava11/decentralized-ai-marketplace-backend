@@ -85,32 +85,31 @@ export const updateMyProfile = catchAsync(
 //Delete My Profile
 export const deleteMyProfile = catchAsync(
   async (req: UserRequest, res: Response, next: NextFunction) => {
- try {
-  const userId = req.user.id;
+    try {
+      const userId = req.user.id;
 
-  // 1. Delete dependent AIWorker records
-  await prisma.aIWorker.deleteMany({
-    where: { developerId: userId },
-  });
+      // 1. Delete dependent AIWorker records
+      await prisma.aIWorker.deleteMany({
+        where: { developerId: userId },
+      });
 
-  // 2. Delete dependent Job records
-  await prisma.job.deleteMany({
-    where: { userId: userId },
-  });
+      // 2. Delete dependent Job records
+      await prisma.job.deleteMany({
+        where: { userId: userId },
+      });
 
-  // 3. Now delete the user
-  await prisma.user.delete({
-    where: { id: userId },
-  });
+      // 3. Now delete the user
+      await prisma.user.delete({
+        where: { id: userId },
+      });
 
-  res.json({ success: true, message: "Profile Deleted Successfully" });
-} catch (error) {
-  console.error("Delete profile error:", error);
-  return next(new ErrorHandler("Internal server error", 500));
-}
-
-
-});
+      res.json({ success: true, message: "Profile Deleted Successfully" });
+    } catch (error) {
+      console.error("Delete profile error:", error);
+      return next(new ErrorHandler("Internal server error", 500));
+    }
+  }
+);
 
 //Get AI Worker by ID for Users
 export const getAIWorkerByIdForUsers = catchAsync(
@@ -118,36 +117,35 @@ export const getAIWorkerByIdForUsers = catchAsync(
     try {
       const { id } = req.params; // For AI Worker ID
       const aiWorker = await prisma.aIWorker.findUnique({
-  where: {
-    id,
-    status: "APPROVED",
-  },
-  select: {
-    id: true,
-    name: true,
-    description: true,
-    tags: true,
-    inputSchema: true,
-    outputSchema: true,
-    developerId: true,
-    pricePerRun: true,
-    isPublic: true,
-    filePath: true,
-    createdAt: true,
-    updatedAt: true,
-    status: true,
-    rejectionReason: true,
-    developer: {
-      select: {
-        id: true,
-        name: true,
-        email: true,
-      },
-    },
-  },
-});
+        where: {
+          id,
+          status: "APPROVED",
+        },
+        select: {
+          id: true,
+          name: true,
+          description: true,
+          tags: true,
+          inputSchema: true,
+          outputSchema: true,
+          developerId: true,
+          pricePerRun: true,
+          isPublic: true,
+          filePath: true,
+          createdAt: true,
+          updatedAt: true,
+          status: true,
+          rejectionReason: true,
+          developer: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+            },
+          },
+        },
+      });
 
-      console.log("AI Worker Details:", aiWorker);
       if (!aiWorker) {
         return next(new ErrorHandler("AI Worker not found", 404));
       }
@@ -161,24 +159,26 @@ export const getAIWorkerByIdForUsers = catchAsync(
 
 export const checkPurchaseStatus = catchAsync(
   async (req: UserRequest, res: Response, next: NextFunction) => {
-    const { userId, workerId } = req.params;
+    const { userId, agentId } = req.params;
 
-  try {
-    const order = await prisma.order.findFirst({
-      where: {
-        userId,
-        aiWorkerId: workerId,
-        status: "PAID",
-      },
-    });
+    console.log("User Id is ", userId);
+    console.log("Worker Id is ", agentId);
+    
+    try {
+      const order = await prisma.order.findFirst({
+        where: {
+          userId,
+          aiWorkerId: agentId,
+          status: "PAID",
+        },
+      });
+      console.log("Order Details:", order);
 
-    if (order) {
-      return res.status(200).json({ owns: true });
-    } else {
-      return res.status(200).json({ owns: false });
+      const owns = !!order;
+      return res.status(200).json({ owns });
+    } catch (err) {
+      console.error(err);
+      return res.status(500).json({ message: "Server error" });
     }
-  } catch (err) {
-    console.error(err);
-    return res.status(500).json({ message: "Server error" });
   }
-  });
+);

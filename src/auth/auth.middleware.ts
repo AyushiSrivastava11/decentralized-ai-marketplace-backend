@@ -16,8 +16,7 @@ export const authenticate = async (req: AuthRequest, res: Response, next: NextFu
     res.status(401).json({ message: 'Missing token' }); 
     return; 
   }
-  console.log("[generateToken] JWT_SECRET:", JWT_SECRET);
-  console.log("Token received:", token);
+
 
   try {
     const decoded = jwt.verify(token, JWT_SECRET) as { id: string, role: string };

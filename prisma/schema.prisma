@@ -21,6 +21,7 @@ model User {
   jobs            Job[]
   reviews         Review[]
   orders          Order[]
+  apiKeys         ApiKey[] 
 }
 
 model AIWorker {
@@ -43,6 +44,7 @@ model AIWorker {
   rejectionReason String?
   purchases       UserPurchase[]
   orders          Order[]
+  apiKeys         ApiKey[] 
 }
 
 model UserPurchase {
@@ -104,6 +106,21 @@ model Order {
 
   createdAt DateTime @default(now())
 }
+
+model ApiKey {
+  id          String   @id @default(uuid())
+  key         String   @unique
+  userId      String
+  aiWorkerId  String
+  remainingRuns Int     @default(0) // how many runs left
+
+  user        User     @relation(fields: [userId], references: [id])
+  aiWorker    AIWorker @relation(fields: [aiWorkerId], references: [id])
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
 
 enum Role {
   USER
